@@ -1,0 +1,31 @@
+{
+  "name": "node_apiproducts",
+  "version": "1.0.0",
+  "description": "Proyecto de api restful de los registros de los datos de un producto usando node - express -sqlite3",
+  "main": "index.js",
+  "scripts": {
+    "test": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harlericho/node_apiproducts.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/harlericho/node_apiproducts/issues"
+  },
+  "homepage": "https://github.com/harlericho/node_apiproducts#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.3",
+    "express-fileupload": "^1.3.1",
+    "express-validator": "^6.14.0",
+    "morgan": "^1.10.0",
+    "sqlite3": "^5.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}

@@ -39,22 +39,35 @@ const getProductById = (req, res) => {
 const postProduct = (req, res) => {
     const { code, names, price, description } = req.body;
     var images = null;
-    if (req.files) {
-        const file = req.files.image;
-        images = Date.now() + '-' + file.name;
-        file.mv('./uploads/' + images);
-        console.log('Image upload is: => ' + images);
-    }
-    db.run('INSERT INTO product (code, names, price, description, image) VALUES (?, ?, ?, ?, ?)', code, names, price, description, images, (err) => {
+    db.get('SELECT * FROM product WHERE code = ?', code, (err, row) => {
         if (err) {
             res.status(500).send({
                 message: err.message
             });
         }
-        res.status(201).send({
-            message: 'Product created'
-        });
-    });
+        if (row) {
+            res.status(400).send({
+                message: 'Product already exists'
+            });
+        } else {
+            if (req.files) {
+                const file = req.files.image;
+                images = Date.now() + '-' + file.name;
+                file.mv('./uploads/' + images);
+                console.log('Image upload is: => ' + images);
+            }
+            db.run('INSERT INTO product (code, names, price, description, image) VALUES (?, ?, ?, ?, ?)', code, names, price, description, images, (err) => {
+                if (err) {
+                    res.status(500).send({
+                        message: err.message
+                    });
+                }
+                res.status(200).send({
+                    message: 'Product created'
+                });
+            });
+        }
+    })
 }
 
 // * PUT product by id
@@ -62,12 +75,7 @@ const putProductById = (req, res) => {
     const id = req.params.id;
     const { code, names, price, description } = req.body;
     var images = null;
-    if (req.files) {
-        const file = req.files.image;
-        images = Date.now() + '-' + file.name;
-        file.mv('./uploads/' + images);
-        console.log('Image upload is: => ' + images);
-    }
+
     db.get('SELECT * FROM product WHERE id = ?', id, (err, row) => {
         if (err) {
             res.status(500).send({
@@ -79,23 +87,42 @@ const putProductById = (req, res) => {
                 message: 'Product not found'
             });
         } else {
-            if (row.image !== null) {
-                fs.unlink('uploads/' + row.image, (err) => {
-                    console.log('Image deleted is: => ' + row.image);
-                })
-            } else {
-                images = row.image;
-            }
-            db.run('UPDATE product SET code = ?, names = ?, price = ?, description = ?, image = ? WHERE id = ?', code, names, price, description, images, id, (err) => {
+            db.get('SELECT COUNT(*) FROM product WHERE code = ? OR id = ?', code, id, (err, row1) => {
                 if (err) {
                     res.status(500).send({
                         message: err.message
                     });
                 }
-                res.status(200).send({
-                    message: 'Product updated'
-                });
-            });
+                if (Object.values(row1) >= 2) {
+                    res.status(400).send({
+                        message: 'Product already exists'
+                    });
+                } else {
+                    if (req.files) {
+                        if (row.image !== null) {
+                            fs.unlink('uploads/' + row.image, (err) => {
+                                console.log('Image deleted is: => ' + row.image);
+                            })
+                        }
+                        const file = req.files.image;
+                        images = Date.now() + '-' + file.name;
+                        file.mv('./uploads/' + images);
+                        console.log('Image upload is: => ' + images);
+                    } else {
+                        images = row.image;
+                    }
+                    db.run('UPDATE product SET code = ?, names = ?, price = ?, description = ?, image = ? WHERE id = ?', code, names, price, description, images, id, (err) => {
+                        if (err) {
+                            res.status(500).send({
+                                message: err.message
+                            });
+                        }
+                        res.status(200).send({
+                            message: 'Product updated'
+                        });
+                    });
+                }
+            })
         }
     })
 }
